@@ -1,6 +1,11 @@
-import type { QueryClient } from '@tanstack/react-query';
-import { Link, Outlet, createRootRouteWithContext, useNavigate } from '@tanstack/react-router';
-import { useLogout, useUser } from '../data/auth';
+import type { QueryClient } from "@tanstack/react-query";
+import {
+  Link,
+  Outlet,
+  createRootRouteWithContext,
+  useNavigate,
+} from "@tanstack/react-router";
+import { useLogout, useUser } from "../data/auth";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -11,7 +16,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   notFoundComponent: () => (
     <div className="card">
       <h1 className="card-title">404</h1>
-      <p className="my-4 font-normal text-gray-500 dark:text-gray-400">That page does not exist.</p>
+      <p className="my-4 font-normal text-gray-500 dark:text-gray-400">
+        That page does not exist.
+      </p>
       <Link to="/" className="button">
         Go home
       </Link>
@@ -37,21 +44,40 @@ function RootLayout() {
         <nav className="ml-auto flex items-center gap-4">
           {isPending ? null : user ? (
             <>
-              <Link to="/dashboard" className="text-blue-600 hover:underline dark:text-blue-400">
+              <Link
+                to="/dashboard"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
                 Dashboard
               </Link>
-              <Link to="/chat" className="text-blue-600 hover:underline dark:text-blue-400">
+              <Link
+                to="/chat"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
                 Chat
               </Link>
-              <Link to="/profile" className="text-blue-600 hover:underline dark:text-blue-400">
+              <Link
+                to="/cgm"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Glucose
+              </Link>
+              <Link
+                to="/profile"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
                 Profile
               </Link>
-              <span className="font-normal text-gray-500 dark:text-gray-400">{user.email}</span>
+              <span className="font-normal text-gray-500 dark:text-gray-400">
+                {user.email}
+              </span>
               <button
                 className="button-ghost"
                 disabled={logout.isPending}
                 onClick={() =>
-                  logout.mutate(undefined, { onSuccess: () => navigate({ to: '/login' }) })
+                  logout.mutate(undefined, {
+                    onSuccess: () => navigate({ to: "/login" }),
+                  })
                 }
               >
                 Sign out
@@ -59,7 +85,10 @@ function RootLayout() {
             </>
           ) : (
             <>
-              <Link to="/login" className="text-blue-600 hover:underline dark:text-blue-400">
+              <Link
+                to="/login"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
                 Sign in
               </Link>
               <Link to="/register" className="button">
@@ -70,7 +99,7 @@ function RootLayout() {
         </nav>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="mx-auto px-6 py-8">
         <Outlet />
       </main>
     </div>

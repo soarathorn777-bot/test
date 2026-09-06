@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as RegisterIndexRouteImport } from './routes/register/index'
+import { Route as AuthedCgmIndexRouteImport } from './routes/_authed/cgm/index'
 import { Route as AuthedChatIndexRouteImport } from './routes/_authed/chat/index'
 import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
 import { Route as AuthedProfileIndexRouteImport } from './routes/_authed/profile/index'
@@ -36,6 +37,11 @@ const RegisterIndexRoute = RegisterIndexRouteImport.update({
   path: '/register/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedCgmIndexRoute = AuthedCgmIndexRouteImport.update({
+  id: '/cgm/',
+  path: '/cgm/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedChatIndexRoute = AuthedChatIndexRouteImport.update({
   id: '/chat/',
   path: '/chat/',
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login/': typeof LoginIndexRoute
   '/register/': typeof RegisterIndexRoute
+  '/cgm/': typeof AuthedCgmIndexRoute
   '/chat/': typeof AuthedChatIndexRoute
   '/dashboard/': typeof AuthedDashboardIndexRoute
   '/profile/': typeof AuthedProfileIndexRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginIndexRoute
   '/register': typeof RegisterIndexRoute
+  '/cgm': typeof AuthedCgmIndexRoute
   '/chat': typeof AuthedChatIndexRoute
   '/dashboard': typeof AuthedDashboardIndexRoute
   '/profile': typeof AuthedProfileIndexRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login/': typeof LoginIndexRoute
   '/register/': typeof RegisterIndexRoute
+  '/_authed/cgm/': typeof AuthedCgmIndexRoute
   '/_authed/chat/': typeof AuthedChatIndexRoute
   '/_authed/dashboard/': typeof AuthedDashboardIndexRoute
   '/_authed/profile/': typeof AuthedProfileIndexRoute
@@ -81,15 +90,23 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login/' | '/register/' | '/chat/' | '/dashboard/' | '/profile/'
+    | '/'
+    | '/login/'
+    | '/register/'
+    | '/cgm/'
+    | '/chat/'
+    | '/dashboard/'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/register' | '/chat' | '/dashboard' | '/profile'
+  to:
+    '/' | '/login' | '/register' | '/cgm' | '/chat' | '/dashboard' | '/profile'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/login/'
     | '/register/'
+    | '/_authed/cgm/'
     | '/_authed/chat/'
     | '/_authed/dashboard/'
     | '/_authed/profile/'
@@ -132,6 +149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/cgm/': {
+      id: '/_authed/cgm/'
+      path: '/cgm'
+      fullPath: '/cgm/'
+      preLoaderRoute: typeof AuthedCgmIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/chat/': {
       id: '/_authed/chat/'
       path: '/chat'
@@ -157,12 +181,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedCgmIndexRoute: typeof AuthedCgmIndexRoute
   AuthedChatIndexRoute: typeof AuthedChatIndexRoute
   AuthedDashboardIndexRoute: typeof AuthedDashboardIndexRoute
   AuthedProfileIndexRoute: typeof AuthedProfileIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedCgmIndexRoute: AuthedCgmIndexRoute,
   AuthedChatIndexRoute: AuthedChatIndexRoute,
   AuthedDashboardIndexRoute: AuthedDashboardIndexRoute,
   AuthedProfileIndexRoute: AuthedProfileIndexRoute,

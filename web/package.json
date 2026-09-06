@@ -10,8 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@tanstack/charts": "^0.16.0",
     "@tanstack/react-query": "^5.66.0",
     "@tanstack/react-router": "^1.100.0",
+    "d3-scale": "^4.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -20,6 +22,7 @@
     "@tanstack/react-query-devtools": "^5.66.0",
     "@tanstack/react-router-devtools": "^1.100.0",
     "@tanstack/router-plugin": "^1.100.0",
+    "@types/d3-scale": "^4.0.9",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",

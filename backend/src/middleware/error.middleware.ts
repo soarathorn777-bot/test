@@ -1,10 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { MulterError } from "multer";
 
+export type FieldErrors = Record<string, string[] | undefined>;
+
 export class HttpError extends Error {
   constructor(
     public status: number,
     message: string,
+    /** Field-level messages, matching what validate() returns for bodies. */
+    public details?: FieldErrors,
   ) {
     super(message);
   }
@@ -25,7 +29,9 @@ export function errorHandler(
   _next: NextFunction,
 ) {
   if (err instanceof HttpError) {
-    return res.status(err.status).json({ error: err.message });
+    return res
+      .status(err.status)
+      .json(err.details ? { error: err.message, details: err.details } : { error: err.message });
   }
 
   if (err instanceof MulterError) {

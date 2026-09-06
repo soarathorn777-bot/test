@@ -16,3 +16,19 @@ export const rejectFile = (file: File): string | null => {
   }
   return null;
 };
+
+/** Mirrors the backend's CGM multer config: one `.xlsx`, 100 MB. */
+export const WORKBOOK_EXTENSIONS = [".xlsx"];
+export const MAX_WORKBOOK_BYTES = 104_857_600;
+
+export const rejectWorkbook = (file: File): string | null => {
+  const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+  if (!WORKBOOK_EXTENSIONS.includes(ext)) {
+    return "Only .xlsx workbooks are supported";
+  }
+  if (file.size === 0) return "That file is empty";
+  if (file.size > MAX_WORKBOOK_BYTES) {
+    return `That file is ${formatBytes(file.size)}; the limit is ${formatBytes(MAX_WORKBOOK_BYTES)}`;
+  }
+  return null;
+};

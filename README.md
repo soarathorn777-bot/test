@@ -23,14 +23,16 @@ Open http://localhost:5173.
 
 ```
 docker-compose.yml     Postgres service
-backend/               Express API (auth, chat, documents)
-  src/routes/          auth.routes.ts, chat.routes.ts, document.routes.ts
-  src/services/        auth.service.ts, user.service.ts, …
+backend/               Express API (auth, chat, documents, CGM)
+  src/routes/          auth.routes.ts, chat.routes.ts, document.routes.ts, cgm.routes.ts
+  src/services/        auth.service.ts, user.service.ts, cgm.service.ts, …
   src/utils/jwt.ts     Token signing and verification
+  src/utils/cgmWorkbook.ts  Streaming .xlsx reader (time + mg/dL only)
 web/                   Vite + React client
   src/lib/api.ts       fetch wrapper, Bearer header, error unwrapping
   src/lib/tokens.ts    localStorage token store
-  src/lib/auth.ts      TanStack Query hooks for the session
+  src/lib/wallClock.ts Zone-free timestamp helpers for CGM data
+  src/data/            TanStack Query hooks (auth.ts, documents.ts, cgm.ts)
   src/routes/          file-based routes; `_authed.tsx` guards its children
 ```
 
@@ -55,7 +57,38 @@ Because the Vite dev server proxies `/api` to the API, the browser sees one orig
 | GET    | `/api/auth/me`       | bearer | Current user                  |
 | POST   | `/api/auth/logout`   | bearer | Acknowledge sign-out          |
 
-The backend also serves `/api/chat` and `/api/documents`, and a liveness probe at `/health` (outside `/api`); the web client does not call them.
+| Method | Path                     | Auth   | Purpose                                    |
+| ------ | ------------------------ | ------ | ------------------------------------------ |
+| POST   | `/api/cgm/uploads`       | bearer | Upload an `.xlsx` export; returns **202**   |
+| GET    | `/api/cgm/uploads`       | bearer | List uploads and their ingest status        |
+| GET    | `/api/cgm/uploads/:id`   | bearer | One upload — poll this while it parses      |
+| DELETE | `/api/cgm/uploads/:id`   | bearer | Delete an upload and the readings it added  |
+| GET    | `/api/cgm/readings`      | bearer | One page of readings, in time order         |
+| PATCH  | `/api/cgm/readings/:id`  | bearer | Set a reading's comment                     |
+
+The backend also serves `/api/chat` and `/api/documents`, and a liveness probe at `/health` (outside `/api`); the web client does not call those two.
+
+## CGM exports
+
+`/cgm` ingests the `.xlsx` a Glunovo-style sensor app exports and charts it.
+
+A reading is four fields, and nothing else is kept:
+
+```ts
+{ id: string; mgDl: number; timeStamp: string; comment: string }
+```
+
+1. **Only the time and mg/dL columns are read.** The readings sheet is found by its header row (`Time` plus `mg/dL`), not by name or position, and the two columns are matched by title — so a blank spacer column, an unused column, a reordered export, or a renamed sheet all pass through. The other sheets (`Carb`, `Insulin`, `Sport`, `Medication`, `BG`, `AlarmAlert`) are ignored.
+2. **`mgDl` defaults to 0.** A blank cell, or a row recorded while the sensor was still warming up, is stored as `0`.
+3. **`comment` is the user's.** It is never read from a file, and a re-upload never touches one.
+4. **Upload is asynchronous.** The file is spooled to disk and `POST /api/cgm/uploads` returns `202` immediately with the row in `processing`. Parsing streams the workbook and commits in batches of 1000, so a 12 MB file (200k readings) lands in ~11 s without holding anything large in memory. The client polls the upload until it reads `ready` or `failed`.
+5. **Re-uploading is safe.** `cgm_readings` is unique on `(user_id, recorded_at)` and inserts are `ON CONFLICT DO NOTHING`, so overlapping exports add only their new tail — comments on the readings they share stay put.
+6. **Timestamps carry no time zone**, because the export carries none. They are stored as `timestamp` — the device's own wall clock — and travel as plain `YYYY-MM-DDTHH:MM:SS` text so no layer can shift 16:01 into another zone. See `web/src/lib/wallClock.ts`.
+7. **Reads are paged.** `GET /api/cgm/readings?page=1&pageSize=200&order=asc` returns `{ readings, page, pageSize, total, totalPages }`, sorted by time. `pageSize` caps at 1000. The `(user_id, recorded_at)` unique index serves the sort and the offset, so a page costs about the same at page 1 or page 999 (~180-240 ms over 200k readings).
+
+The chart is [TanStack Charts](https://tanstack.com/charts) (`@tanstack/charts`), plotting the current page. Its x axis is a d3 `scaleTime` rather than a compact point scale, so a gap in the sensor's record takes up its real width.
+
+Two settings are optional in `backend/.env`: `MAX_CGM_UPLOAD_BYTES` (default 100 MiB) and `CGM_UPLOAD_DIR` (defaults to the OS temp directory — set it if that is a small tmpfs).
 
 ## Scripts
 

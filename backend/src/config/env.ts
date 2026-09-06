@@ -12,6 +12,12 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
   OPENAI_EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
   MAX_UPLOAD_BYTES: z.coerce.number().default(1_000_000),
+  // CGM exports are whole sensor histories, so they get their own, far larger
+  // ceiling. They are streamed from disk rather than held in memory.
+  MAX_CGM_UPLOAD_BYTES: z.coerce.number().default(104_857_600),
+  // Where a CGM workbook is spooled while it is parsed. Defaults to the OS
+  // temp directory; set it if that is a small tmpfs.
+  CGM_UPLOAD_DIR: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
