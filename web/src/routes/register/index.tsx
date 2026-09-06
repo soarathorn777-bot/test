@@ -1,6 +1,6 @@
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { ApiError } from "../../lib/api";
-import { meQueryOptions } from "../../lib/auth";
+import { meQueryOptions } from "../../data/auth";
 import { useRegister } from "./hooks/useRegister";
 
 export const RegisterPage = () => {

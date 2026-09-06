@@ -1,15 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Route as AuthedRoute } from "../../_authed";
-import { useLogout } from "../../../lib/auth";
+import { createFileRoute } from "@tanstack/react-router";
+import { useUser } from "../../../data/auth";
 
-export const Route = createFileRoute("/_authed/profile/")({
-  component: ProfilePage,
-});
+const ProfilePage = () => {
+  const { data: user } = useUser();
 
-function ProfilePage() {
-  const { user } = AuthedRoute.useRouteContext();
-  const logout = useLogout();
-  const navigate = useNavigate();
+  if (!user) return;
 
   return (
     <div className="grid gap-5">
@@ -43,24 +38,10 @@ function ProfilePage() {
           </dd>
         </dl>
       </div>
-
-      <div className="card grid gap-3.5">
-        <h2 className="card-subtitle">Session</h2>
-        <p className="my-2 font-normal text-gray-500 dark:text-gray-400">
-          Signing out clears the token stored in this browser.
-        </p>
-        <button
-          className="button"
-          disabled={logout.isPending}
-          onClick={() =>
-            logout.mutate(undefined, {
-              onSuccess: () => navigate({ to: "/login" }),
-            })
-          }
-        >
-          {logout.isPending ? "Signing out…" : "Sign out"}
-        </button>
-      </div>
     </div>
   );
-}
+};
+
+export const Route = createFileRoute("/_authed/profile/")({
+  component: ProfilePage,
+});

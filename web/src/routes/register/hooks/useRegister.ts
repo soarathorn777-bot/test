@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState, type SubmitEvent } from "react";
 import { api } from "../../../lib/api";
-import { acceptAuth, meQueryOptions, type AuthResponse } from "../../../lib/auth";
+import { acceptAuth, meQueryOptions, type AuthResponse } from "../../../data/auth";
 
 export const useRegister = () => {
   const navigate = useNavigate();

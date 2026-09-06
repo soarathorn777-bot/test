@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { Link, Outlet, createRootRouteWithContext, useNavigate } from '@tanstack/react-router';
-import { useLogout, useUser } from '../lib/auth';
+import { useLogout, useUser } from '../data/auth';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -39,6 +39,9 @@ function RootLayout() {
             <>
               <Link to="/dashboard" className="text-blue-600 hover:underline dark:text-blue-400">
                 Dashboard
+              </Link>
+              <Link to="/chat" className="text-blue-600 hover:underline dark:text-blue-400">
+                Chat
               </Link>
               <Link to="/profile" className="text-blue-600 hover:underline dark:text-blue-400">
                 Profile

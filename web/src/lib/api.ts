@@ -16,6 +16,10 @@ export class ApiError extends Error {
   }
 }
 
+/** What to show a user when a request failed. */
+export const errorMessage = (error: unknown) =>
+  error instanceof ApiError ? error.message : "Something went wrong";
+
 /**
  * The backend answers errors as `{ error: string }`, and validation failures
  * add `{ details: { field: string[] } }`.
@@ -25,13 +29,19 @@ interface ErrorBody {
   details?: FieldErrors;
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const token = getToken();
+
+  // FormData sets its own multipart Content-Type, boundary included; naming it
+  // ourselves would produce a body the server cannot parse.
+  const isFormData = init.body instanceof FormData;
 
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...(init.body && !isFormData
+        ? { "Content-Type": "application/json" }
+        : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
@@ -45,11 +55,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body = (await res.json().catch(() => null)) as ErrorBody | null;
 
   if (!res.ok) {
-    throw new ApiError(res.status, body?.error ?? res.statusText, body?.details);
+    throw new ApiError(
+      res.status,
+      body?.error ?? res.statusText,
+      body?.details,
+    );
   }
 
   return body as T;
-}
+};
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
@@ -61,4 +75,6 @@ export const api = {
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  upload: <T>(path: string, form: FormData) =>
+    request<T>(path, { method: "POST", body: form }),
 };

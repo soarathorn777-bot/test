@@ -1,5 +1,5 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
-import { meQueryOptions } from "../lib/auth";
+import { meQueryOptions } from "../data/auth";
 
 /**
  * Pathless layout route: everything nested under it requires a session.

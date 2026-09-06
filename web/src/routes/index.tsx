@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { useUser } from '../lib/auth';
+import { useUser } from '../data/auth';
 
 export const Route = createFileRoute('/')({
   component: HomePage,

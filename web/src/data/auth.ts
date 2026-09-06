@@ -4,8 +4,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { ApiError, api } from "./api";
-import { clearToken, getToken, setToken } from "./tokens";
+import { ApiError, api } from "../lib/api";
+import { clearToken, getToken, setToken } from "../lib/tokens";
 
 export interface User {
   id: string;
@@ -43,11 +43,11 @@ export const meQueryOptions = queryOptions({
   retry: false,
 });
 
-export function useUser() {
+export const useUser = () => {
   return useQuery(meQueryOptions);
-}
+};
 
-export function useLogout() {
+export const useLogout = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
@@ -63,4 +63,4 @@ export function useLogout() {
       queryClient.clear();
     },
   });
-}
+};
