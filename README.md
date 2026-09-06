@@ -19,6 +19,8 @@ npm run dev            # api on :4000, web on :5173
 
 Open http://localhost:5173.
 
+Deploying to Railway is covered in [DEPLOY.md](DEPLOY.md).
+
 ## Layout
 
 ```

@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "web"
   ],
@@ -11,12 +14,17 @@
     "dev:backend": "npm run dev --prefix backend",
     "dev:web": "npm run dev --workspace web",
     "build": "npm run build --prefix backend && npm run build --workspace web",
+    "build:web": "npm run build --workspace web",
+    "start:web": "serve -s web/dist -l ${PORT:-3000}",
     "typecheck": "npm run build --prefix backend -- --noEmit && npm run typecheck --workspace web",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d",
     "db:migrate": "npm run migrate:up --prefix backend",
     "setup": "npm install && npm install --prefix backend && npm run db:up && npm run db:migrate"
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
