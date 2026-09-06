@@ -1,82 +1,51 @@
-import {
-  clearTokens,
-  getAccessToken,
-  getRefreshToken,
-  setTokens,
-} from "./tokens";
+import { clearToken, getToken } from "./tokens";
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+const BASE = import.meta.env.VITE_API_URL ?? "";
+
+/** Field-level messages from the backend's Zod validation middleware. */
+export type FieldErrors = Record<string, string[] | undefined>;
 
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
-    public readonly code: string = 'error',
-    public readonly details?: unknown,
+    public readonly details?: FieldErrors,
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
-// Endpoints that must never trigger the refresh-and-retry dance.
-const NO_RETRY = ['/api/auth/refresh', '/api/auth/login', '/api/auth/register', '/api/auth/logout'];
-
-let refreshPromise: Promise<boolean> | null = null;
-
-/** Rotates the stored pair. Concurrent 401s share one in-flight call. */
-function refreshSession(): Promise<boolean> {
-  refreshPromise ??= (async () => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) return false;
-
-    const res = await fetch(`${BASE}/api/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!res.ok) {
-      // The refresh token is spent, expired, or revoked — nothing to salvage.
-      clearTokens();
-      return false;
-    }
-
-    const body = (await res.json()) as { accessToken: string; refreshToken: string };
-    setTokens(body);
-    return true;
-  })()
-    .catch(() => false)
-    .finally(() => {
-      refreshPromise = null;
-    });
-  return refreshPromise;
+/**
+ * The backend answers errors as `{ error: string }`, and validation failures
+ * add `{ details: { field: string[] } }`.
+ */
+interface ErrorBody {
+  error?: string;
+  details?: FieldErrors;
 }
 
-async function request<T>(path: string, init: RequestInit = {}, allowRetry = true): Promise<T> {
-  const accessToken = getAccessToken();
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getToken();
 
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
   });
 
-  // The access token expired; rotate it once and replay the request.
-  if (res.status === 401 && allowRetry && !NO_RETRY.includes(path)) {
-    if (await refreshSession()) return request<T>(path, init, false);
-  }
+  // There is no refresh endpoint: an expired or rejected token is simply dead.
+  if (res.status === 401) clearToken();
 
   if (res.status === 204) return undefined as T;
 
-  const body = await res.json().catch(() => null);
+  const body = (await res.json().catch(() => null)) as ErrorBody | null;
 
   if (!res.ok) {
-    const err = (body as { error?: { message?: string; code?: string; details?: unknown } })?.error;
-    throw new ApiError(res.status, err?.message ?? res.statusText, err?.code, err?.details);
+    throw new ApiError(res.status, body?.error ?? res.statusText, body?.details);
   }
 
   return body as T;
@@ -85,8 +54,11 @@ async function request<T>(path: string, init: RequestInit = {}, allowRetry = tru
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) }),
+    request<T>(path, {
+      method: "POST",
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }),
   patch: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+    request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
+  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };

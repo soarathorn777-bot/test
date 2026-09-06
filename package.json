@@ -4,29 +4,24 @@
   "version": "0.1.0",
   "type": "module",
   "workspaces": [
-    "server",
     "web"
   ],
   "scripts": {
-    "dev": "concurrently -n server,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
-    "dev:server": "npm run dev --workspace server",
+    "dev": "concurrently -n backend,web -c blue,magenta \"npm:dev:backend\" \"npm:dev:web\"",
+    "dev:backend": "npm run dev --prefix backend",
     "dev:web": "npm run dev --workspace web",
-    "build": "npm run build --workspace server && npm run build --workspace web",
-    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web",
+    "build": "npm run build --prefix backend && npm run build --workspace web",
+    "typecheck": "npm run build --prefix backend -- --noEmit && npm run typecheck --workspace web",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d",
-    "db:migrate": "npm run prisma:migrate --workspace server",
-    "db:studio": "npm run prisma:studio --workspace server",
-    "setup": "npm install && npm run db:up && npm run db:migrate"
+    "db:migrate": "npm run migrate:up --prefix backend",
+    "setup": "npm install && npm install --prefix backend && npm run db:up && npm run db:migrate"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
   },
   "allowScripts": {
-    "@prisma/client@6.19.3": true,
-    "@prisma/engines@6.19.3": true,
-    "esbuild@0.28.2": true,
-    "prisma@6.19.3": true
+    "esbuild@0.28.2": true
   }
 }
