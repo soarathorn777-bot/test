@@ -18,6 +18,10 @@ const envSchema = z.object({
   // Where a CGM workbook is spooled while it is parsed. Defaults to the OS
   // temp directory; set it if that is a small tmpfs.
   CGM_UPLOAD_DIR: z.string().optional(),
+  // n8n cloud webhook that receives a reading + its recent history and emails
+  // the analysis. See backend/src/services/n8n.service.ts.
+  N8N_WEBHOOK_URL: z.string().url("N8N_WEBHOOK_URL must be a valid URL"),
+  N8N_WEBHOOK_SECRET: z.string().min(1, "N8N_WEBHOOK_SECRET is required"),
 });
 
 const parsed = envSchema.safeParse(process.env);

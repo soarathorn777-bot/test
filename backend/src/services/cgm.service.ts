@@ -285,3 +285,26 @@ export async function updateComment(params: {
   );
   return result.rows[0] ?? null;
 }
+
+/**
+ * The clicked reading plus the 9 before it, newest first. The subquery scopes
+ * to `id` and `user_id` together, so a reading owned by someone else yields no
+ * rows rather than leaking another user's history.
+ */
+export async function getRecentReadings(params: {
+  id: string;
+  userId: string;
+}): Promise<CgmReading[]> {
+  const result = await pool.query<CgmReading>(
+    `SELECT id, mg_dl, to_char(recorded_at, ${TIMESTAMP_TEXT}) AS recorded_at, comment
+       FROM cgm_readings
+      WHERE user_id = $2
+        AND recorded_at <= (
+          SELECT recorded_at FROM cgm_readings WHERE id = $1 AND user_id = $2
+        )
+      ORDER BY recorded_at DESC
+      LIMIT 10`,
+    [params.id, params.userId],
+  );
+  return result.rows;
+}

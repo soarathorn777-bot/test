@@ -116,6 +116,12 @@ export const useUpdateComment = () => {
   });
 };
 
+/** Fires the n8n workflow; it emails the result rather than returning it here. */
+export const useAnalyzeReading = () =>
+  useMutation({
+    mutationFn: (id: string) => api.post<{ status: "sent" }>(`/api/cgm/readings/${id}/analyze`),
+  });
+
 /**
  * Readings appear some seconds after the upload request returns, so the table
  * is refreshed on the edge where the last ingest finishes -- watching the list

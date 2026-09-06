@@ -17,6 +17,16 @@ export const uploadLimiter = rateLimit({
   message: { error: "Upload limit reached, please try again later" },
 });
 
+// Each click runs an LLM call and sends an email on the n8n side, so it gets
+// its own tight budget rather than sharing the general apiLimiter.
+export const analyzeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Analysis limit reached, please try again later" },
+});
+
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,

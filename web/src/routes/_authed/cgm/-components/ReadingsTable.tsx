@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useUpdateComment, type CgmReading } from "../../../../data/cgm";
+import { useAnalyzeReading, useUpdateComment, type CgmReading } from "../../../../data/cgm";
 import { errorMessage } from "../../../../lib/api";
 import { formatWallClock } from "../../../../lib/wallClock";
 
@@ -55,6 +55,36 @@ const CommentCell = ({ reading }: { reading: CgmReading }) => {
   );
 };
 
+/**
+ * Sends this reading and its previous 9 to n8n, which runs the analysis and
+ * emails it -- nothing comes back here to display beyond send/fail.
+ */
+const AnalyzeButton = ({ readingId }: { readingId: string }) => {
+  const analyze = useAnalyzeReading();
+
+  if (analyze.isSuccess) {
+    return <span className="text-xs text-gray-500 dark:text-gray-400">Sent</span>;
+  }
+
+  return (
+    <div className="grid gap-1">
+      <button
+        type="button"
+        className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-50 dark:text-blue-400"
+        disabled={analyze.isPending}
+        onClick={() => analyze.mutate(readingId)}
+      >
+        {analyze.isPending ? "Sending…" : "Analyze with AI"}
+      </button>
+      {analyze.error ? (
+        <span className="text-xs text-red-700 dark:text-red-300">
+          {errorMessage(analyze.error)}
+        </span>
+      ) : null}
+    </div>
+  );
+};
+
 export const ReadingsTable = ({ readings }: Props) => (
   // Bounded and scrolled in place: a page can be a thousand rows, and letting
   // them all extend the document buries everything below the table.
@@ -71,6 +101,9 @@ export const ReadingsTable = ({ readings }: Props) => (
           <th className="w-1/2 border-b border-gray-200 px-3 py-2 dark:border-gray-800">
             Comment
           </th>
+          <th className="border-b border-gray-200 px-3 py-2 dark:border-gray-800">
+            AI
+          </th>
         </tr>
       </thead>
       <tbody style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -85,6 +118,9 @@ export const ReadingsTable = ({ readings }: Props) => (
             <td className="px-3 py-1.5 text-right">{reading.mgDl}</td>
             <td className="px-3 py-1.5">
               <CommentCell reading={reading} />
+            </td>
+            <td className="px-3 py-1.5">
+              <AnalyzeButton readingId={reading.id} />
             </td>
           </tr>
         ))}

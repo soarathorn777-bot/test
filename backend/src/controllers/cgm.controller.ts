@@ -6,6 +6,7 @@ import { readingsQuerySchema } from "../schemas/cgm.schemas";
 import type { UpdateCommentInput } from "../schemas/cgm.schemas";
 import {
   deleteUpload,
+  getRecentReadings,
   getUpload,
   listReadings,
   listUploads,
@@ -14,6 +15,7 @@ import {
   toPublicUpload,
   updateComment,
 } from "../services/cgm.service";
+import { requestReadingAnalysis, toAnalysisPayload } from "../services/n8n.service";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -80,4 +82,19 @@ export const updateCommentHandler = asyncHandler(async (req: Request, res: Respo
   if (!reading) throw new HttpError(404, "Reading not found");
 
   res.status(200).json({ reading: toPublicReading(reading) });
+});
+
+export const analyzeReadingHandler = asyncHandler(async (req: Request, res: Response) => {
+  const readings = await getRecentReadings({
+    id: requireUuid(req.params.id, "Reading"),
+    userId: req.user!.userId,
+  });
+  if (readings.length === 0) throw new HttpError(404, "Reading not found");
+
+  await requestReadingAnalysis({
+    email: req.user!.email,
+    readings: toAnalysisPayload(readings),
+  });
+
+  res.status(200).json({ status: "sent" });
 });

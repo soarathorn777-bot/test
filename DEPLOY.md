@@ -50,11 +50,14 @@ JWT_SECRET=<paste a long random string>
 JWT_EXPIRES_IN=1d
 OPENAI_API_KEY=<your key>
 CORS_ORIGIN=https://<the web service domain from step 3>
+N8N_WEBHOOK_URL=<your n8n cloud workflow's production webhook URL>
+N8N_WEBHOOK_SECRET=<the Header Auth value set on that webhook node>
 ```
 
 Generate a secret with `openssl rand -base64 48` (or `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`).
 
-Every one of `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` and `OPENAI_API_KEY` is
+Every one of `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `OPENAI_API_KEY`,
+`N8N_WEBHOOK_URL` and `N8N_WEBHOOK_SECRET` is
 required — `backend/src/config/env.ts` exits on startup if any is missing. Do **not**
 set `PORT`; Railway provides it.
 
@@ -112,3 +115,10 @@ missing at build time.
   `backend/src/app.ts` is what makes that correct behind Railway's proxy.
 - **Rolling back a migration** is manual: `railway run --service api npm run migrate:down`
   from a local checkout with the Railway CLI.
+- **"Analyze with AI"** (the CGM readings table) POSTs to `/api/cgm/readings/:id/analyze`,
+  which forwards the reading and its previous 9 to the n8n cloud webhook in
+  `N8N_WEBHOOK_URL` and returns as soon as n8n accepts the job — the analysis and
+  the email are entirely n8n's side, nothing is written back to this app. If the
+  button errors, check that the webhook is **Activated** in n8n (the production
+  URL only works once it is) and that `N8N_WEBHOOK_SECRET` matches the Header
+  Auth credential on the webhook node.
