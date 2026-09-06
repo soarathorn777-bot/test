@@ -13,6 +13,13 @@ the Express API in `backend/`, and the static Vite build of `web/`.
 > has no lockfile of its own — pointing Railway at `web/` would make `npm ci` fail.
 > `backend/` has its own `package.json` and lockfile, so it builds from `backend`.
 
+> **Don't add `npm ci`/`npm install` to `buildCommand`.** Railpack (the default
+> builder) already runs its own install step with a BuildKit cache mount over
+> `node_modules`. Running `npm ci` again inside `buildCommand` fights that mount
+> and fails with `EBUSY: resource busy or locked, rmdir '.../node_modules/.vite'`
+> (or `.cache`). The committed `railway.json` files only run the build script —
+> leave dependency installation to Railpack.
+
 Each service picks up the `railway.json` sitting at its own root directory, so the
 build and start commands are already committed. You only set the root directory and
 the variables.
